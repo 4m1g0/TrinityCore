@@ -959,6 +959,26 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     stmt->setString(1, account);
 
     LoginDatabase.Execute(stmt);
+    
+    // Log account IP history if enabled
+    if (sWorld->getBoolConfig(CONFIG_IP_LOG_ENABLED))
+    {
+        // Delete if exists record from account ip history
+        stmt = LoginDatabase.GetPreparedStatement(LOGIN_DEL_ACCOUNT_IP_HISTORY);
+
+        stmt->setUInt32(0, id);
+        stmt->setString(1, address);
+
+        LoginDatabase.Execute(stmt);
+
+        // Add record to account ip history
+        stmt = LoginDatabase.GetPreparedStatement(LOGIN_INS_ACCOUNT_IP_HISTORY);
+
+        stmt->setUInt32(0, id);
+        stmt->setString(1, address);
+
+        LoginDatabase.Execute(stmt);
+    }
 
     // NOTE ATM the socket is single-threaded, have this in mind ...
     ACE_NEW_RETURN (m_Session, WorldSession (id, this, AccountTypes(security), expansion, mutetime, locale, recruiter, isRecruiter), -1);

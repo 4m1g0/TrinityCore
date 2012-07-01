@@ -49,6 +49,7 @@ public:
             { "lock",           SEC_PLAYER,         false, &HandleAccountLockCommand,         "", NULL },
             { "set",            SEC_ADMINISTRATOR,  true,  NULL,            "", accountSetCommandTable },
             { "password",       SEC_PLAYER,         false, &HandleAccountPasswordCommand,     "", NULL },
+            { "iplog",          SEC_GAMEMASTER,     false, &HandleAccountIplogCommand,        "", NULL },
             { "",               SEC_PLAYER,         false, &HandleAccountCommand,             "", NULL },
             { NULL,             0,                  false, NULL,                              "", NULL }
         };
@@ -326,6 +327,60 @@ public:
                 return false;
         }
 
+        return true;
+    }
+    
+    static bool HandleAccountIplogCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        char* account = strtok((char*)args, " ");
+
+        if (!account)
+        {
+            handler->SendSysMessage(LANG_CMD_SYNTAX);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+        
+        std::string accountName = account;
+        if (!AccountMgr::normalizeString(accountName))
+        {
+            handler->PSendSysMessage(LANG_ACCOUNT_NOT_EXIST, accountName.c_str());
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        uint32 accountId = AccountMgr::GetId(accountName);
+        if (!accountId)
+        {
+            handler->PSendSysMessage(LANG_ACCOUNT_NOT_EXIST, accountName.c_str());
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_ACCOUNT_IP_HISTORY_BY_ACCOUNT);
+        stmt->setUInt32(0, accountId);
+        PreparedQueryResult result = LoginDatabase.Query(stmt);
+
+        if (!result)
+        {
+            handler->PSendSysMessage(LANG_NO_PLAYERS_FOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        handler->PSendSysMessage(LANG_ACCOUNT_IPLOG_ACCOUNT, accountName.c_str(), accountId);
+        do
+        {
+            Field* fields = result->Fetch();
+            std::string ip = fields[0].GetString();
+            std::string lastAccess = fields[1].GetString();
+
+            handler->PSendSysMessage(LANG_ACCOUNT_IPLOG_IP, ip.c_str(), lastAccess.c_str());
+
+        } while (result->NextRow());
         return true;
     }
 

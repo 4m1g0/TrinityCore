@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS `account_ip_history`;
+CREATE TABLE `account_ip_history` (
+  `id` INT(10) UNSIGNED NOT NULL,
+  `ip` VARCHAR(15) NOT NULL,
+  `last_access` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY (`id`,`ip`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COMMENT='Account ip history';
+
+DELETE FROM trinity_string WHERE entry IN (12000, 12001);
+INSERT INTO trinity_string (entry, content_default) VALUES (12000, 'IPs used by account: %s (Id: %u)');
+INSERT INTO trinity_string (entry, content_default) VALUES (12001, '%s Last access: %s');

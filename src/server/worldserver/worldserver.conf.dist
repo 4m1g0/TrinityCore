@@ -791,6 +791,14 @@ ChatLogs.Addon = 0
 ChatLogs.BattleGround = 0
 
 #
+#    IPHistoryLog
+#        Description: Log account IP access history.
+#                     0 - (Disabled)
+#        Default:     1 - (Enabled)
+
+IPHistoryLog = 1
+
+#
 ###################################################################################################
 
 ###################################################################################################
