@@ -791,6 +791,14 @@ ChatLogs.Addon = 0
 ChatLogs.BattleGround = 0
 
 #
+#    SpamReportLog
+#        Description: Save log of spam reports on db
+#        Default:    1 - (Enabled)
+#                    0 - (Disabled)
+
+SpamReportLog = 1
+
+#
 ###################################################################################################
 
 ###################################################################################################

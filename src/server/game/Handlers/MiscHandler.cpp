@@ -1351,19 +1351,28 @@ void WorldSession::HandleComplainOpcode(WorldPacket & recv_data)
     uint32 unk3 = 0;
     uint32 unk4 = 0;
     std::string description = "";
-    recv_data >> spam_type;                                 // unk 0x01 const, may be spam type (mail/chat)
+    recv_data >> spam_type;                                 // spam type (mail/chat)
     recv_data >> spammer_guid;                              // player guid
     switch (spam_type)
     {
         case 0:
             recv_data >> unk1;                              // const 0
-            recv_data >> unk2;                              // probably mail id
+            recv_data >> unk2;                              // mail id
             recv_data >> unk3;                              // const 0
+            if (unk2)
+            {
+                PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAIL_BY_ID);
+                stmt->setUInt32(0, unk2);
+                PreparedQueryResult result = CharacterDatabase.Query(stmt);
+
+                if (result)
+                    description = (*result)[1].GetString();
+            }
             break;
         case 1:
-            recv_data >> unk1;                              // probably language
-            recv_data >> unk2;                              // message type?
-            recv_data >> unk3;                              // probably channel id
+            recv_data >> unk1;                              // language
+            recv_data >> unk2;                              // message type: say, yell, etc.
+            recv_data >> unk3;                              // probably channel id (always 0)
             recv_data >> unk4;                              // unk random value
             recv_data >> description;                       // spam description string (messagetype, channel name, player name, message)
             break;
@@ -1378,6 +1387,29 @@ void WorldSession::HandleComplainOpcode(WorldPacket & recv_data)
     SendPacket(&data);
 
     sLog->outDebug(LOG_FILTER_NETWORKIO, "REPORT SPAM: type %u, guid %u, unk1 %u, unk2 %u, unk3 %u, unk4 %u, message %s", spam_type, GUID_LOPART(spammer_guid), unk1, unk2, unk3, unk4, description.c_str());
+
+    // Spam reports DB log
+    if (sWorld->getBoolConfig(CONFIG_SPAM_REPORT_LOG_ENABLED))
+    {
+        if (spam_type == 1) // Remove unnecesary information in description
+        {
+            uint8 channelPos = description.find("Channel: ");
+            uint8 channelLength = description.find("]", channelPos) - channelPos + 1;
+            uint8 textPos = description.find(" Text:");
+
+            std::string channel = description.substr(channelPos, channelLength);
+            description = channel + description.substr(textPos);
+        }
+
+        PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(CHAR_INS_SPAM_REPORT_LOG);
+        stmt->setUInt64(0, spammer_guid);
+        stmt->setUInt64(1, _player->GetGUIDLow());
+        stmt->setUInt8(2, spam_type);
+        stmt->setUInt32(3, unk1);
+        stmt->setUInt32(4, unk2);
+        stmt->setString(5, description);
+        CharacterDatabase.Execute(stmt);
+    }
 }
 
 void WorldSession::HandleRealmSplitOpcode(WorldPacket & recv_data)
