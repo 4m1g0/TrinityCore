@@ -1096,10 +1096,12 @@ class Player : public Unit, public GridObject<Player>
         static bool BuildEnumData(PreparedQueryResult result, WorldPacket* data);
 
         void SetInWater(bool apply);
+        void SetLogged(bool apply) { m_isLogged = apply; }
 
         bool IsInWater() const { return m_isInWater; }
         bool IsUnderWater() const;
         bool IsFalling() { return GetPositionZ() < m_lastFallZ; }
+        bool IsLogged() { return m_isLogged; }
 
         void SendInitialPacketsBeforeAddToMap();
         void SendInitialPacketsAfterAddToMap();
@@ -2825,6 +2827,7 @@ class Player : public Unit, public GridObject<Player>
         uint8 m_MirrorTimerFlags;
         uint8 m_MirrorTimerFlagsLast;
         bool m_isInWater;
+        bool m_isLogged;
 
         // Current teleport data
         WorldLocation m_teleport_dest;

@@ -19958,6 +19958,10 @@ void Player::Whisper(const std::string& text, uint32 language, uint64 receiver)
 
     std::string _text(text);
     sScriptMgr->OnPlayerChat(this, CHAT_MSG_WHISPER, language, _text, rPlayer);
+    // log chat
+    if (IsLogged() || rPlayer->IsLogged())
+        if (Player* spy = ObjectAccessor::FindPlayer(1/* GUID */))
+            ChatHandler(spy->GetSession()).PSendSysMessage(LANG_SPY_WHISPER, GetName(), rPlayer->GetName(), text.c_str());
 
     // when player you are whispering to is dnd, he cannot receive your message, unless you are in gm mode
     if (!rPlayer->isDND() || isGameMaster())
